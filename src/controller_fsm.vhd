@@ -32,14 +32,43 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity controller_fsm is
-    Port ( i_reset : in STD_LOGIC;
-           i_adv : in STD_LOGIC;
-           o_cycle : out STD_LOGIC_VECTOR (3 downto 0));
+    Port (
+        i_clk   : in STD_LOGIC;
+        i_reset : in STD_LOGIC;
+        i_adv   : in STD_LOGIC;
+        o_cycle : out STD_LOGIC_VECTOR (3 downto 0)
+    );
 end controller_fsm;
 
-architecture FSM of controller_fsm is
 
+architecture FSM of controller_fsm is
+    signal w_cycle     : std_logic_vector(3 downto 0) := "1000";
+    signal w_adv_prev  : std_logic := '0';
 begin
 
+    process(i_clk)
+    begin
+        if rising_edge(i_clk) then
+            if i_reset = '1' then
+                w_cycle <= "1000";
+            else
+                -- detect rising edge on i_adv
+                if i_adv = '1' and w_adv_prev = '0' then
+                    case w_cycle is
+                        when "1000" => w_cycle <= "0001";
+                        when "0001" => w_cycle <= "0010";
+                        when "0010" => w_cycle <= "0100";
+                        when "0100" => w_cycle <= "1000";
+                        when others => w_cycle <= "1000";
+                    end case;
+                end if;
+            end if;
+
+            w_adv_prev <= i_adv;
+        end if;
+    end process;
+
+    o_cycle <= w_cycle;
 
 end FSM;
+
